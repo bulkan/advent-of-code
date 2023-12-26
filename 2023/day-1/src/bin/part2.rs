@@ -1,48 +1,38 @@
-use regex::Regex;
 use std::fs;
 
 fn main() {
-    // let numbers_map = HashMap::from([
-    //     ("one", 1),
-    //     ("two", 2),
-    //     ("three", 3),
-    //     ("four", 4),
-    //     ("five", 5),
-    //     ("six", 6),
-    //     ("seven", 7),
-    //     ("eight", 8),
-    //     ("nine", 9),
-    // ]);
+    let numbers = [
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    ];
 
     let content = fs::read_to_string("calibrationValues.txt").expect("file no found");
 
-    let re = Regex::new(r"(\d+)|(one)|(two)|(three)|(four)|(five)|(six)|(seven)|(eight)|(nine)+")
-        .expect("failed to create regex");
+    let mut sum = 0;
 
-    let sum = content.split('\n').fold(0, |acc, line| {
-        let digit_matches = re
-            .captures_iter(line)
-            .map(|mat| mat.get(0).unwrap().as_str())
-            .collect::<Vec<_>>();
+    for line in content.lines() {
+        let mut digits: Vec<String> = Vec::new();
 
-        println!("{:?}", digit_matches);
+        for (i, c) in line.chars().enumerate() {
+            if c.is_ascii_digit() {
+                digits.push(c.to_string());
+            }
 
-        // if digit_matches.is_empty() {
-        //     return acc;
-        // }
+            for (d, number) in numbers.iter().enumerate() {
+                let reduced_line = &line[i..];
+                if reduced_line.starts_with(number) {
+                    digits.push((d + 1).to_string())
+                }
+            }
+        }
 
-        // let digit = format!(
-        //     "{}{}",
-        //     digit_matches[0],
-        //     digit_matches[digit_matches.len() - 1]
-        // );
-        //
-        // if let Ok(result) = digit.parse::<u32>() {
-        //     return acc + result;
-        // }
+        if !digits.is_empty() {
+            let digit = format!("{}{}", digits[0], digits[digits.len() - 1])
+                .parse::<u32>()
+                .unwrap_or(0);
 
-        acc
-    });
+            sum += digit;
+        }
+    }
 
-    println!("{sum}");
+    println!("\n{sum}");
 }
