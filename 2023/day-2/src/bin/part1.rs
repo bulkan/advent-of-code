@@ -48,15 +48,11 @@ fn process_line(line: &str) -> u32 {
     // run through each game and update corresponding colors sum
     // if sum is over game_config then game is invalid and
     // dont add the game id to the sum
-    let games = parts
+    let valid = parts
         .next()
         .expect("games is missing")
         .split(';')
         .flat_map(|s| s.split(',').map(|s| s.trim()))
-        .collect::<Vec<_>>();
-
-    let valid = games
-        .iter()
         .map(|s| {
             let (count, color) = parse_game(s);
 
