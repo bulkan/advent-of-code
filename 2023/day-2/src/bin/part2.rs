@@ -30,15 +30,12 @@ fn process_line(line: &str) -> u32 {
         .for_each(|s| {
             let (count, color) = parse_game(s);
 
-            let max_count = std::cmp::max(count, *max_colors.get(color).expect("yo"));
+            let max_count = count.max(*max_colors.get(color).expect("yo"));
 
             max_colors.insert(color, max_count);
         });
 
-    max_colors
-        .into_values()
-        .reduce(|acc, e| acc * e)
-        .expect("multiply max_colors failed")
+    max_colors.into_values().product()
 }
 
 fn cube_conundrum(content: &str) -> u32 {
