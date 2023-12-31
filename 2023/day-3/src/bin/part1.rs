@@ -19,7 +19,21 @@ fn gear_ratios(schematic: &str) -> u32 {
         .map(|l| l.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
-    dbg!(lines_of_chars);
+    let mut iterator = lines_of_chars.iter().peekable();
+
+    while let Some(current) = iterator.next() {
+        // Use the current value
+        println!("Current: {current:?}");
+
+        // Peek at the next value
+        if let Some(&next) = iterator.peek() {
+            // Use the next value without consuming it
+            println!("Next (peeked): {next:?}");
+        } else {
+            // Handle the case where there is no next value
+            println!("No next value");
+        }
+    }
 
     0
 }
