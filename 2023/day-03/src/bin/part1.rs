@@ -1,3 +1,25 @@
+use std::collections::HashSet;
+
+use glam::IVec2;
+use nom::{
+    branch::alt,
+    bytes::complete::{is_not, take_till1},
+    character::complete::digit1,
+    combinator::iterator,
+    IResult, Parser,
+};
+use nom_locate::LocatedSpan;
+
+type Span<'a> = LocatedSpan<&'a str>;
+type SpanIVec2<'a> = LocatedSpan<&'a str, IVec2>;
+
+#[derive(Debug, PartialEq)]
+enum Value<'a> {
+    Empty,
+    Symbol(SpanIVec2<'a>),
+    Number(SpanIVec2<'a>),
+}
+
 fn main() {
     let schematic = include_str!("./input.txt");
 
@@ -6,44 +28,86 @@ fn main() {
     dbg!(res);
 }
 
-// current line will need to peek at second line
-//    if there is second line then while iterating over first line
-//        skip over periods, when a digit is found,
-//            keep track of start pos and end pos, digit as string
-//
-fn gear_ratios(schematic: &str) -> u32 {
-    let lines_of_chars = schematic
-        .lines()
-        .map(|l| l.chars().collect::<Vec<_>>())
-        .collect::<Vec<_>>();
+fn with_xy(span: Span) -> SpanIVec2 {
+    // column/location are 1-indexed
+    let x = span.get_column() as i32 - 1;
+    let y = span.location_line() as i32 - 1;
+    span.map_extra(|_| IVec2::new(x, y))
+}
 
-    let mut iterator = lines_of_chars.iter().peekable();
+fn parse_grid(input: Span) -> IResult<Span, Vec<Value>> {
+    let mut it = iterator(
+        input,
+        alt((
+            digit1.map(|span| with_xy(span)).map(Value::Number),
+            is_not(".\n0123456789")
+                .map(|span| with_xy(span))
+                .map(Value::Symbol),
+            take_till1(|c: char| c.is_ascii_digit() || c != '.' && c != '\n').map(|_| Value::Empty),
+        )),
+    );
 
-    while let Some(current) = iterator.next() {
-        // Use the current value
-        println!("{current:?}");
+    let parsed = it
+        .filter(|value| value != &Value::Empty)
+        .collect::<Vec<Value>>();
+    let res: IResult<_, _> = it.finish();
 
-        // Peek at the next value
-        if let Some(&next) = iterator.peek() {
-            // Use the next value without consuming it
-            println!("\t{next:?}");
-        }
-    }
+    res.map(|(input, _)| (input, parsed))
+}
 
-    0
+fn gear_ratios(schematic: &str) -> String {
+    let objects = parse_grid(Span::new(schematic)).unwrap().1;
+
+    let symbol_map = objects
+        .iter()
+        .filter_map(|value| match value {
+            Value::Empty => None,
+            Value::Symbol(sym) => Some(sym.extra),
+            Value::Number(_) => None,
+        })
+        .collect::<HashSet<IVec2>>();
+
+    let result = objects
+        .iter()
+        .filter_map(|value| {
+            let Value::Number(num) = value else {
+                return None;
+            };
+            let surrounding_positions = [
+                // east border
+                IVec2::new(num.fragment().len() as i32, 0),
+                // west border
+                IVec2::new(-1, 0),
+            ]
+            .into_iter()
+            .chain(
+                // north border
+                (-1..=num.fragment().len() as i32).map(|x_offset| IVec2::new(x_offset, 1)),
+            )
+            .chain(
+                // south border
+                (-1..=num.fragment().len() as i32).map(|x_offset| IVec2::new(x_offset, -1)),
+            )
+            .map(|pos| pos + num.extra)
+            .collect::<Vec<IVec2>>();
+
+            surrounding_positions
+                .iter()
+                .any(|pos| symbol_map.contains(pos))
+                .then_some(
+                    num.fragment()
+                        .parse::<u32>()
+                        .expect("should be a valid number"),
+                )
+        })
+        .sum::<u32>();
+
+    result.to_string()
 }
 
 #[cfg(test)]
 mod tests {
     use crate::gear_ratios;
-
-    // fn get_numbers_from_lines_returns_numbers() {
-    //     let line1 = vec!['4', '6', '7', '.', '.', '1', '1', '4', '.', '.'];
-    //     let line2 = vec!['.', '.', '.', '*', '.', '.', '.', '.', '.', '.'];
-    //     let result = get_numbers_from_lines(line1, line2);
-    //
-    //     assert_eq!(result, [467]);
-    // }
 
     #[test]
     fn it_works_as_expected() {
@@ -61,6 +125,6 @@ mod tests {
             .trim();
 
         let result = gear_ratios(schematic);
-        assert_eq!(result, 4361);
+        assert_eq!(result, "4361");
     }
 }

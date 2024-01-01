@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 nom.workspace = true
+nom_locate.workspace = true
+glam.workspace = true
