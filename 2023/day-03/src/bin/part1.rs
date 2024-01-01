@@ -1,7 +1,5 @@
-use std::fs;
-
 fn main() {
-    let schematic = fs::read_to_string("input.txt").expect("file should exist");
+    let schematic = include_str!("./input.txt");
 
     let res = gear_ratios(schematic.trim());
 
