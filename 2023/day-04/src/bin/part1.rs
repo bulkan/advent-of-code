@@ -3,35 +3,46 @@ use nom::{
     character::complete::{digit1, space1},
     combinator::map,
     multi::separated_list1,
+    sequence::separated_pair,
     IResult,
 };
 use std::u32;
 
 fn main() {}
 
-fn scratchcards(input: &str) -> IResult<&str, Vec<u32>> {
+fn parse_line(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
     let (input, _) = tag("Card ")(input)?;
 
-    // Card id
+    // card id
     let (input, _) = digit1(input)?;
+    let (input, _) = tag(": ")(input)?;
 
-    // delimited(digit1, );
-
-    Ok((input, vec![]))
+    parse_card(input)
 }
 
+// 13 2 | 2 11
+fn parse_card(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
+    let (input, (winning_numbers, numbers)) =
+        separated_pair(parse_numbers, tag(" | "), parse_numbers)(input)?;
+
+    Ok((input, (winning_numbers, numbers)))
+}
+
+// 13 2 1
 fn parse_numbers(input: &str) -> IResult<&str, Vec<u32>> {
-    separated_list1(
+    let (input, nums) = separated_list1(
         space1,
         map(digit1, |s: &str| {
             s.parse::<u32>().expect("should be a digit")
         }),
-    )(input)
+    )(input)?;
+
+    Ok((input, nums))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse_numbers, scratchcards};
+    use crate::{parse_card, parse_line, parse_numbers};
 
     #[test]
     fn parse_numbers_returns_numbers() {
@@ -40,6 +51,25 @@ mod tests {
             parse_numbers("83 86  6 31 17  9 48 53"),
             Ok(("", vec![83, 86, 6, 31, 17, 9, 48, 53]))
         );
+    }
+
+    #[test]
+    fn parse_card_handles_preceeding_text() {
+        let card = "41 20 | 1 2";
+        let winning_numbers = vec![41, 20];
+        let numbers = vec![1, 2];
+        let result = parse_card(card);
+
+        assert_eq!(result, Ok(("", (winning_numbers, numbers))));
+    }
+
+    #[test]
+    fn parse_game_line_works() {
+        let input = "Card 22: 13 2 | 12 2";
+
+        let result = parse_line(input);
+
+        assert_eq!(result, Ok(("", (vec![13, 2], vec![12, 2]))));
     }
 
     //     fn it_works_as_expected() {
