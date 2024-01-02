@@ -24,8 +24,6 @@ fn process_scratchcards(input: &str) -> u32 {
 
             let total_winning_numbers = winning_numbers.intersection(&numbers).count() as u32;
 
-            dbg!(&total_winning_numbers);
-
             if total_winning_numbers == 0 {
                 0
             } else if total_winning_numbers == 1 {
@@ -41,7 +39,8 @@ fn process_scratchcards(input: &str) -> u32 {
 
 // Card 1: 12 1 | 23 32
 fn parse_line(input: &str) -> IResult<&str, (HashSet<u32>, HashSet<u32>)> {
-    let (input, _) = tag("Card ")(input)?;
+    let (input, _) = tag("Card")(input)?;
+    let (input, _) = space0(input)?;
 
     // card id
     let (input, _) = digit1(input)?;
