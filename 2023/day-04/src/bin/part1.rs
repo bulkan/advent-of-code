@@ -1,8 +1,8 @@
 use nom::{
-    bytes::complete::{self, tag},
-    character::complete::{digit1, multispace0, multispace1, space0, space1},
-    combinator::{map, map_res},
-    multi::{separated_list0, separated_list1},
+    bytes::complete::tag,
+    character::complete::{digit1, space0, space1},
+    combinator::map_res,
+    multi::separated_list1,
     sequence::separated_pair,
     IResult,
 };
@@ -31,7 +31,7 @@ fn process_scratchcards(input: &str) -> u32 {
             } else if total_winning_numbers == 1 {
                 1
             } else {
-                (1..total_winning_numbers).fold(1, |acc, x| acc * 2)
+                (1..total_winning_numbers).fold(1, |acc, _| acc * 2)
             }
         })
         .sum();
