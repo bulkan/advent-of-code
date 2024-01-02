@@ -4,13 +4,36 @@ use nom::{
     combinator::map,
     multi::separated_list1,
     sequence::separated_pair,
+    // combinator::{iterator}
     IResult,
 };
-use std::u32;
+use std::{collections::HashSet, u32};
 
-fn main() {}
+fn main() {
+    let scratchcards = include_str!("./input.txt");
 
-fn parse_line(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
+    let points = process_scratchcards(scratchcards);
+
+    println!("{points}");
+}
+
+fn process_scratchcards(input: &str) -> u32 {
+    let _points = input
+        .lines()
+        .map(parse_line)
+        .inspect(|line_result| {
+            if let Ok((_, (winning_numbers, numbers))) = line_result {
+                // .inspect(|_, (winning_numbers, numbers)| {
+                dbg!(winning_numbers, numbers);
+            }
+        })
+        .collect::<Vec<_>>();
+
+    0
+}
+
+// Card 1: 12 1 | 23 32
+fn parse_line(input: &str) -> IResult<&str, (HashSet<u32>, HashSet<u32>)> {
     let (input, _) = tag("Card ")(input)?;
 
     // card id
@@ -21,7 +44,7 @@ fn parse_line(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
 }
 
 // 13 2 | 2 11
-fn parse_card(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
+fn parse_card(input: &str) -> IResult<&str, (HashSet<u32>, HashSet<u32>)> {
     let (input, (winning_numbers, numbers)) =
         separated_pair(parse_numbers, tag(" | "), parse_numbers)(input)?;
 
@@ -29,7 +52,7 @@ fn parse_card(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
 }
 
 // 13 2 1
-fn parse_numbers(input: &str) -> IResult<&str, Vec<u32>> {
+fn parse_numbers(input: &str) -> IResult<&str, HashSet<u32>> {
     let (input, nums) = separated_list1(
         space1,
         map(digit1, |s: &str| {
@@ -37,27 +60,34 @@ fn parse_numbers(input: &str) -> IResult<&str, Vec<u32>> {
         }),
     )(input)?;
 
+    let nums = nums.into_iter().collect::<HashSet<_>>();
+
     Ok((input, nums))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse_card, parse_line, parse_numbers};
+    use std::collections::HashSet;
+
+    use crate::{parse_card, parse_line, parse_numbers, process_scratchcards};
 
     #[test]
     fn parse_numbers_returns_numbers() {
-        assert_eq!(parse_numbers("1 41 20"), Ok(("", vec![1, 41, 20])));
+        assert_eq!(
+            parse_numbers("1 41 20"),
+            Ok(("", HashSet::from([1, 41, 20])))
+        );
         assert_eq!(
             parse_numbers("83 86  6 31 17  9 48 53"),
-            Ok(("", vec![83, 86, 6, 31, 17, 9, 48, 53]))
+            Ok(("", HashSet::from([83, 86, 6, 31, 17, 9, 48, 53])))
         );
     }
 
     #[test]
     fn parse_card_handles_preceeding_text() {
         let card = "41 20 | 1 2";
-        let winning_numbers = vec![41, 20];
-        let numbers = vec![1, 2];
+        let winning_numbers = HashSet::from([41, 2]);
+        let numbers = HashSet::from([1, 2]);
         let result = parse_card(card);
 
         assert_eq!(result, Ok(("", (winning_numbers, numbers))));
@@ -69,17 +99,23 @@ mod tests {
 
         let result = parse_line(input);
 
-        assert_eq!(result, Ok(("", (vec![13, 2], vec![12, 2]))));
+        assert_eq!(
+            result,
+            Ok(("", (HashSet::from([13, 2]), HashSet::from([12, 2]))))
+        );
     }
 
-    //     fn it_works_as_expected() {
-    //         let input = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
-    // Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
-    // Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
-    // Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
-    // Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
-    // Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
-    //
-    //         let results = scratchcards(input);
-    //     }
+    #[test]
+    fn it_works_as_expected() {
+        let input = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
+Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
+Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
+Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
+
+        let points = process_scratchcards(input);
+
+        assert_eq!(points, 13);
+    }
 }
