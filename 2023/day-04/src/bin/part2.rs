@@ -6,7 +6,10 @@ use nom::{
     sequence::separated_pair,
     IResult,
 };
-use std::{collections::HashSet, u32};
+use std::{
+    collections::{BTreeMap, HashSet},
+    u32,
+};
 
 fn main() {
     let scratchcards = include_str!("./input.txt");
@@ -17,24 +20,36 @@ fn main() {
 }
 
 fn process_scratchcards(input: &str) -> u32 {
-    let points = input
+    let scores = input
         .lines()
         .map(|line| {
             let (_, (winning_numbers, numbers)) = parse_line(line).expect("should exist yo");
 
-            let total_winning_numbers = winning_numbers.intersection(&numbers).count() as u32;
-
-            if total_winning_numbers == 0 {
-                0
-            } else if total_winning_numbers == 1 {
-                1
-            } else {
-                (2 as u32).pow(total_winning_numbers - 1)
-            }
+            winning_numbers.intersection(&numbers).count()
         })
-        .sum();
+        .collect::<Vec<_>>();
 
-    points
+    let store = (0..scores.len())
+        .map(|index| (index, 1))
+        .collect::<BTreeMap<usize, u32>>();
+
+    let result = scores
+        .iter()
+        .enumerate()
+        .fold(store, |mut acc, (card_index, card_score)| {
+            let to_add = *acc.get(&card_index).unwrap();
+
+            for i in (card_index + 1)..(card_index + 1 + *card_score) {
+                acc.entry(i).and_modify(|value| {
+                    *value += to_add;
+                });
+            }
+            acc
+        })
+        .values()
+        .sum::<u32>();
+
+    result
 }
 
 // Card 1: 12 1 | 23 32
@@ -139,6 +154,6 @@ mod tests {
 
         let points = process_scratchcards(input);
 
-        assert_eq!(points, 13);
+        assert_eq!(points, 30);
     }
 }
