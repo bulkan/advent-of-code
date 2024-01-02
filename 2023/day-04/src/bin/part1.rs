@@ -1,10 +1,9 @@
 use nom::{
-    bytes::complete::tag,
-    character::complete::{digit1, space1},
-    combinator::map,
-    multi::separated_list1,
+    bytes::complete::{self, tag},
+    character::complete::{digit1, multispace0, multispace1, space0, space1},
+    combinator::{map, map_res},
+    multi::{separated_list0, separated_list1},
     sequence::separated_pair,
-    // combinator::{iterator}
     IResult,
 };
 use std::{collections::HashSet, u32};
@@ -18,18 +17,24 @@ fn main() {
 }
 
 fn process_scratchcards(input: &str) -> u32 {
-    let _points = input
+    let points = input
         .lines()
-        .map(parse_line)
-        .inspect(|line_result| {
-            if let Ok((_, (winning_numbers, numbers))) = line_result {
-                // .inspect(|_, (winning_numbers, numbers)| {
-                dbg!(winning_numbers, numbers);
-            }
-        })
-        .collect::<Vec<_>>();
+        .map(|line| {
+            dbg!(line);
+            let (_, (winning_numbers, numbers)) = parse_line(line).expect("should exist yo");
 
-    0
+            let total_winning_numbers = winning_numbers.intersection(&numbers).count() as u32;
+
+            total_winning_numbers
+            // if total_winning_numbers > 1 {
+            //     1 + (total_winning_numbers - 1).pow(2)
+            // } else {
+            //     1
+            // };
+        })
+        .sum();
+
+    points
 }
 
 // Card 1: 12 1 | 23 32
@@ -38,7 +43,7 @@ fn parse_line(input: &str) -> IResult<&str, (HashSet<u32>, HashSet<u32>)> {
 
     // card id
     let (input, _) = digit1(input)?;
-    let (input, _) = tag(": ")(input)?;
+    let (input, _) = tag(":")(input)?;
 
     parse_card(input)
 }
@@ -53,16 +58,17 @@ fn parse_card(input: &str) -> IResult<&str, (HashSet<u32>, HashSet<u32>)> {
 
 // 13 2 1
 fn parse_numbers(input: &str) -> IResult<&str, HashSet<u32>> {
-    let (input, nums) = separated_list1(
-        space1,
-        map(digit1, |s: &str| {
-            s.parse::<u32>().expect("should be a digit")
-        }),
-    )(input)?;
+    let (input, _) = space0(input)?;
+
+    let (input, nums) = separated_list1(space1, parse_digit)(input)?;
 
     let nums = nums.into_iter().collect::<HashSet<_>>();
 
     Ok((input, nums))
+}
+
+fn parse_digit(input: &str) -> IResult<&str, u32> {
+    map_res(digit1, |s: &str| s.parse::<u32>())(input)
 }
 
 #[cfg(test)]
@@ -74,19 +80,20 @@ mod tests {
     #[test]
     fn parse_numbers_returns_numbers() {
         assert_eq!(
-            parse_numbers("1 41 20"),
-            Ok(("", HashSet::from([1, 41, 20])))
-        );
-        assert_eq!(
-            parse_numbers("83 86  6 31 17  9 48 53"),
+            parse_numbers("83 86   6 31 17 9 48 53"),
             Ok(("", HashSet::from([83, 86, 6, 31, 17, 9, 48, 53])))
+        );
+
+        assert_eq!(
+            parse_numbers("  1  41   20"),
+            Ok(("", HashSet::from([1, 41, 20])))
         );
     }
 
     #[test]
     fn parse_card_handles_preceeding_text() {
-        let card = "41 20 | 1 2";
-        let winning_numbers = HashSet::from([41, 2]);
+        let card = "  41 20 | 1 2";
+        let winning_numbers = HashSet::from([41, 20]);
         let numbers = HashSet::from([1, 2]);
         let result = parse_card(card);
 
@@ -102,6 +109,18 @@ mod tests {
         assert_eq!(
             result,
             Ok(("", (HashSet::from([13, 2]), HashSet::from([12, 2]))))
+        );
+    }
+
+    #[test]
+    fn parse_game_line_works_with_weird_input() {
+        let input = "Card 3: 1 21 |  14  1";
+
+        let result = parse_line(input);
+
+        assert_eq!(
+            result,
+            Ok(("", (HashSet::from([1, 21]), HashSet::from([14, 1]))))
         );
     }
 
