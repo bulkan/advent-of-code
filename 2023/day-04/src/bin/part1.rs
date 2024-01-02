@@ -20,17 +20,19 @@ fn process_scratchcards(input: &str) -> u32 {
     let points = input
         .lines()
         .map(|line| {
-            dbg!(line);
             let (_, (winning_numbers, numbers)) = parse_line(line).expect("should exist yo");
 
             let total_winning_numbers = winning_numbers.intersection(&numbers).count() as u32;
 
-            total_winning_numbers
-            // if total_winning_numbers > 1 {
-            //     1 + (total_winning_numbers - 1).pow(2)
-            // } else {
-            //     1
-            // };
+            dbg!(&total_winning_numbers);
+
+            if total_winning_numbers == 0 {
+                0
+            } else if total_winning_numbers == 1 {
+                1
+            } else {
+                (1..total_winning_numbers).fold(1, |acc, x| acc * 2)
+            }
         })
         .sum();
 
