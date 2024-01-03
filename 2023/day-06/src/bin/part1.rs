@@ -7,7 +7,6 @@ use nom::{
     sequence::{preceded, tuple},
     IResult,
 };
-use std::{collections::HashSet, u32};
 
 #[derive(Debug, PartialEq)]
 struct Race {
@@ -16,7 +15,7 @@ struct Race {
 }
 
 impl Race {
-    fn possible_races(&self) -> HashSet<u32> {
+    fn possible_races(&self) -> Vec<u32> {
         (0..self.duration + 1)
             .filter_map(|hold_time| {
                 let speed = hold_time;
@@ -31,16 +30,19 @@ impl Race {
                     None
                 }
             })
-            .collect::<HashSet<u32>>()
+            .collect::<Vec<u32>>()
     }
 }
 
 fn main() {
-    let mut races = indoc! {"
+    let races = indoc! {"
         Time:        60     80     86     76
         Distance:   601   1163   1559   1300
-    "}
-    .lines();
+    "};
+
+    let margin_of_error = process(races);
+
+    println!("{margin_of_error}");
 }
 
 fn parse_digit(input: &str) -> IResult<&str, u32> {
@@ -65,8 +67,6 @@ fn parse_distance(input: &str) -> IResult<&str, Vec<u32>> {
     Ok((input, digits))
 }
 
-// TODO:  Move this as a Impl on Race
-
 fn parse_input(input: &str) -> Vec<Race> {
     let mut input = input.lines();
     let line1 = input.next().expect("should be line 1");
@@ -84,10 +84,15 @@ fn parse_input(input: &str) -> Vec<Race> {
 }
 
 fn process(input: &str) -> u32 {
-    // let duration = 7;
+    parse_input(input)
+        .iter()
+        .map(|race| {
+            let possible_races_length: u32 =
+                race.possible_races().len().try_into().expect("should work");
 
-    // dbg!(possible_races(duration));
-    0
+            possible_races_length
+        })
+        .product()
 }
 
 #[cfg(test)]
@@ -141,7 +146,7 @@ mod tests {
             distance: 9,
         };
 
-        assert_eq!(race.possible_races(), HashSet::from([12, 10]));
+        assert_eq!(race.possible_races(), vec![10, 12, 12, 10]);
     }
 
     #[test]
