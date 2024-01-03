@@ -1,4 +1,4 @@
-# adventofcode
+# Advent of Code
 
 Using Rust to solve the problems.
 
