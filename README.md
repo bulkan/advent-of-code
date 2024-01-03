@@ -1,15 +1,9 @@
 # adventofcode
 
-To install dependencies:
+Using Rust to solve the problems.
 
-```bash
-bun install
-```
+## Resources to learn Rust
 
-To run:
+* [Standard library documentation](https://doc.rust-lang.org/std)
+* [Chris Biscard on Youtube](https://www.youtube.com/@chrisbiscardi). Chris' video on [How to set up Rust for Advent of Code](https://www.youtube.com/watch?v=fEQv-cqzbPg) got me into attempting advent of code in Rust
 
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.0.14. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
