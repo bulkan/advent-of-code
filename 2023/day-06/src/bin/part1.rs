@@ -97,8 +97,6 @@ fn process(input: &str) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-
     use crate::{parse_distance, parse_input, parse_time, process, Race};
     use indoc::indoc;
 
