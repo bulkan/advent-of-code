@@ -15,6 +15,26 @@ struct Race {
     distance: u32,
 }
 
+impl Race {
+    fn possible_races(&self) -> HashSet<u32> {
+        (0..self.duration + 1)
+            .filter_map(|hold_time| {
+                let speed = hold_time;
+
+                let remaining_duration = self.duration - speed;
+
+                let distance = remaining_duration * speed;
+
+                if distance > self.distance {
+                    Some(distance)
+                } else {
+                    None
+                }
+            })
+            .collect::<HashSet<u32>>()
+    }
+}
+
 fn main() {
     let mut races = indoc! {"
         Time:        60     80     86     76
@@ -46,17 +66,6 @@ fn parse_distance(input: &str) -> IResult<&str, Vec<u32>> {
 }
 
 // TODO:  Move this as a Impl on Race
-fn possible_races(duration: u32) -> HashSet<u32> {
-    (0..duration + 1)
-        .map(|hold_time| {
-            let speed = hold_time;
-
-            let remaining_duration = duration - speed;
-
-            remaining_duration * speed
-        })
-        .collect::<HashSet<u32>>()
-}
 
 fn parse_input(input: &str) -> Vec<Race> {
     let mut input = input.lines();
@@ -85,7 +94,7 @@ fn process(input: &str) -> u32 {
 mod tests {
     use std::collections::HashSet;
 
-    use crate::{parse_distance, parse_input, parse_time, possible_races, process, Race};
+    use crate::{parse_distance, parse_input, parse_time, process, Race};
     use indoc::indoc;
 
     #[test]
@@ -127,9 +136,12 @@ mod tests {
 
     #[test]
     fn possible_races_returns_correct_values() {
-        let races = possible_races(7);
+        let race = Race {
+            duration: 7,
+            distance: 9,
+        };
 
-        assert_eq!(races, HashSet::from([6, 10, 12, 0]));
+        assert_eq!(race.possible_races(), HashSet::from([12, 10]));
     }
 
     #[test]
