@@ -13,7 +13,17 @@ use nom_supreme::tag::complete::tag;
 // const CARD_STRENGTH: HashMap<&str, u32> = HashMap::from([("A", 14), ("K", 13), ("Q", 12)]);
 
 fn main() {
-    todo!();
+    let input = include_str!("./input.txt");
+
+    camel_cards(input);
+}
+
+fn camel_cards(input: &str) -> u32 {
+    let (_, hands) = parse_cards(input).expect("parsing failed");
+
+    dbg!(hands);
+
+    0
 }
 
 #[derive(Debug, PartialEq)]
@@ -57,7 +67,7 @@ fn parse_hand(input: &str) -> IResult<&str, Vec<&str>, ErrorTree<&str>> {
 mod tests {
     use indoc::indoc;
 
-    use crate::{parse_cards, parse_hand, parse_line, Hand};
+    use crate::{camel_cards, parse_cards, parse_hand, parse_line, Hand};
 
     #[test]
     fn parse_hand_works() {
@@ -107,5 +117,18 @@ mod tests {
                 }
             ]
         );
+    }
+
+    #[test]
+    fn it_should_work_with_example() {
+        let input = indoc! {"
+            32T3K 765
+            T55J5 684
+            KK677 28
+            KTJJT 220
+            QQQJA 483
+        "};
+
+        assert_eq!(camel_cards(input), 6440);
     }
 }
