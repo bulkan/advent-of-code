@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-
+use nom::character::streaming::line_ending;
+use nom::combinator::map;
 use nom::{
     branch::alt,
-    character::complete::{self, digit0, digit1},
-    multi::{many0, many1, separated_list1},
-    sequence::{pair, separated_pair},
+    character::complete::{self, space1},
+    multi::{many1, separated_list1},
+    sequence::separated_pair,
     IResult,
 };
 use nom_supreme::error::ErrorTree;
@@ -22,9 +22,18 @@ struct Hand<'a> {
     bet: u32,
 }
 
-// fn parse_cards(input: &str) -> IResult<&str, Vec<Hand>> {
-//     many0(pair(parse_hand, complete::u32))(input)
-// }
+fn parse_cards(input: &str) -> IResult<&str, Vec<Hand>, ErrorTree<&str>> {
+    separated_list1(line_ending, parse_line)(input)
+}
+
+fn parse_line(input: &str) -> IResult<&str, Hand, ErrorTree<&str>> {
+    map(separated_pair(parse_hand, space1, complete::u32), |s| {
+        Hand {
+            cards: s.0,
+            bet: s.1,
+        }
+    })(input)
+}
 
 fn parse_hand(input: &str) -> IResult<&str, Vec<&str>, ErrorTree<&str>> {
     many1(alt((
@@ -48,7 +57,7 @@ fn parse_hand(input: &str) -> IResult<&str, Vec<&str>, ErrorTree<&str>> {
 mod tests {
     use indoc::indoc;
 
-    use crate::parse_hand;
+    use crate::{parse_cards, parse_hand, parse_line, Hand};
 
     #[test]
     fn parse_hand_works() {
@@ -60,15 +69,43 @@ mod tests {
         );
     }
 
-    fn should_work() {
+    #[test]
+    fn parse_line_works() {
+        let input = "32T3K 765";
+
+        assert_eq!(
+            parse_line(input).unwrap(),
+            (
+                "",
+                Hand {
+                    cards: vec!["3", "2", "T", "3", "K"],
+                    bet: 765
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn parse_cards_works() {
         let input = indoc! {"
           32T3K 765
           T55J5 684
-          KK677 28
-          KTJJT 220
-          QQQJA 483
         "};
 
-        assert_eq!(1, 2);
+        let (_, hands) = parse_cards(input).unwrap();
+
+        assert_eq!(
+            hands,
+            vec![
+                Hand {
+                    cards: vec!["3", "2", "T", "3", "K"],
+                    bet: 765
+                },
+                Hand {
+                    cards: vec!["T", "5", "5", "J", "5"],
+                    bet: 684
+                }
+            ]
+        );
     }
 }
