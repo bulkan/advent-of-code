@@ -1,8 +1,7 @@
 use indoc::indoc;
 use nom::{
     bytes::complete::tag,
-    character::complete::{digit1, space0, space1},
-    combinator::map_res,
+    character::complete::{self, space0, space1},
     multi::separated_list1,
     sequence::{preceded, tuple},
     IResult,
@@ -45,14 +44,10 @@ fn main() {
     println!("{margin_of_error}");
 }
 
-fn parse_digit(input: &str) -> IResult<&str, u32> {
-    map_res(digit1, |s: &str| s.parse::<u32>())(input)
-}
-
 fn parse_time(input: &str) -> IResult<&str, Vec<u32>> {
     let (input, digits) = preceded(
         tuple((tag("Time:"), space0)),
-        separated_list1(space1, parse_digit),
+        separated_list1(space1, complete::u32),
     )(input)?;
 
     Ok((input, digits))
@@ -61,7 +56,7 @@ fn parse_time(input: &str) -> IResult<&str, Vec<u32>> {
 fn parse_distance(input: &str) -> IResult<&str, Vec<u32>> {
     let (input, digits) = preceded(
         tuple((tag("Distance:"), space0)),
-        separated_list1(space1, parse_digit),
+        separated_list1(space1, complete::u32),
     )(input)?;
 
     Ok((input, digits))
