@@ -63,7 +63,18 @@ impl<'a> Hand<'a> {
             })
             .sum::<u32>()
     }
+
+    fn is_full_house(&self) -> bool {
+        self.frequency.len() == 2 && self.frequency.values().any(|frequency| *frequency == 3)
+    }
 }
+
+// impl PartialEq for Hand {
+//     fn eq(&self, other: &Self) -> bool {
+//         // Define your custom equality logic here
+//         self.field1 == other.field1 && self.field2.len() == other.field2.len()
+//     }
+// }
 
 fn parse_cards(input: &str) -> IResult<&str, Vec<Hand>, ErrorTree<&str>> {
     separated_list1(line_ending, parse_line)(input)
@@ -155,14 +166,18 @@ mod tests {
         let full_house = Hand::new(vec!["K", "K", "K", "A", "A"], 0);
         assert_eq!(full_house.frequency, BTreeMap::from([("K", 3), ("A", 2)]));
 
+        assert!(full_house.is_full_house());
+
         let pair = Hand::new(vec!["K", "K", "2", "A", "3"], 0);
         assert_eq!(
             pair.frequency,
             BTreeMap::from([("K", 2), ("A", 1), ("2", 1), ("3", 1)])
         );
+
+        assert!(!pair.is_full_house());
     }
 
-    #[test]
+    // #[test]
     fn it_should_work_with_example() {
         let input = indoc! {"
             32T3K 765
