@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use nom::character::streaming::line_ending;
 use nom::combinator::map;
 use nom::{
@@ -10,8 +12,6 @@ use nom::{
 use nom_supreme::error::ErrorTree;
 use nom_supreme::tag::complete::tag;
 
-// const CARD_STRENGTH: HashMap<&str, u32> = HashMap::from([("A", 14), ("K", 13), ("Q", 12)]);
-
 fn main() {
     let input = include_str!("./input.txt");
 
@@ -19,7 +19,9 @@ fn main() {
 }
 
 fn camel_cards(input: &str) -> u32 {
-    let (_, hands) = parse_cards(input).expect("parsing failed");
+    let (_, mut hands) = parse_cards(input).expect("parsing failed");
+
+    hands.sort_by_key(|hand| hand.strength());
 
     dbg!(hands);
 
@@ -29,7 +31,38 @@ fn camel_cards(input: &str) -> u32 {
 #[derive(Debug, PartialEq)]
 struct Hand<'a> {
     cards: Vec<&'a str>,
+    frequency: HashMap<&'a str, u32>,
     bet: u32,
+}
+
+impl<'a> Hand<'a> {
+    fn new(cards: Vec<&'a str>, bet: u32) -> Hand {
+        let frequency: HashMap<&str, u32> = cards.iter().fold(HashMap::new(), |mut acc, card| {
+            acc.entry(card).and_modify(|card| *card += 1).or_insert(1);
+
+            acc
+        });
+
+        Hand {
+            cards,
+            bet,
+            frequency,
+        }
+    }
+
+    fn strength(&self) -> u32 {
+        let card_strength: HashMap<&str, u32> =
+            HashMap::from([("A", 14), ("K", 13), ("Q", 12), ("J", 11), ("T", 10)]);
+
+        self.cards
+            .iter()
+            .map(|c| {
+                card_strength
+                    .get(c)
+                    .map_or_else(|| c.parse::<u32>().expect("the card is digit"), |&val| val)
+            })
+            .sum::<u32>()
+    }
 }
 
 fn parse_cards(input: &str) -> IResult<&str, Vec<Hand>, ErrorTree<&str>> {
@@ -38,10 +71,7 @@ fn parse_cards(input: &str) -> IResult<&str, Vec<Hand>, ErrorTree<&str>> {
 
 fn parse_line(input: &str) -> IResult<&str, Hand, ErrorTree<&str>> {
     map(separated_pair(parse_hand, space1, complete::u32), |s| {
-        Hand {
-            cards: s.0,
-            bet: s.1,
-        }
+        Hand::new(s.0, s.1)
     })(input)
 }
 
@@ -85,13 +115,7 @@ mod tests {
 
         assert_eq!(
             parse_line(input).unwrap(),
-            (
-                "",
-                Hand {
-                    cards: vec!["3", "2", "T", "3", "K"],
-                    bet: 765
-                }
-            )
+            ("", Hand::new(vec!["3", "2", "T", "3", "K"], 765))
         );
     }
 
@@ -107,16 +131,21 @@ mod tests {
         assert_eq!(
             hands,
             vec![
-                Hand {
-                    cards: vec!["3", "2", "T", "3", "K"],
-                    bet: 765
-                },
-                Hand {
-                    cards: vec!["T", "5", "5", "J", "5"],
-                    bet: 684
-                }
+                Hand::new(vec!["3", "2", "T", "3", "K"], 765),
+                Hand::new(vec!["T", "5", "5", "J", "5"], 684)
             ]
         );
+    }
+
+    #[test]
+    fn card_strength_works() {
+        let hands = [
+            Hand::new(vec!["3", "2", "T", "3", "K"], 765),
+            Hand::new(vec!["T", "5", "5", "J", "5"], 684),
+        ];
+
+        assert_eq!(hands[0].strength(), 31);
+        assert_eq!(hands[1].strength(), 36);
     }
 
     #[test]
