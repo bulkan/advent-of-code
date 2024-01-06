@@ -15,7 +15,9 @@ use nom_supreme::tag::complete::tag;
 fn main() {
     let input = include_str!("./input.txt");
 
-    camel_cards(input);
+    let result = camel_cards(input);
+
+    println!("{result}");
 }
 
 fn camel_cards(input: &str) -> u32 {
