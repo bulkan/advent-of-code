@@ -25,12 +25,20 @@ fn camel_cards(input: &str) -> u32 {
         let ordering = a.rank.cmp(&b.rank);
 
         match ordering {
-            std::cmp::Ordering::Equal => a.cards_strength.cmp(&b.cards_strength),
+            std::cmp::Ordering::Equal => {
+                let mut iter = a
+                    .cards_strength
+                    .iter()
+                    .zip(b.cards_strength.iter())
+                    .skip_while(|(a, b)| *a == *b);
+
+                let (a, b) = iter.next().expect("should be two values");
+
+                a.cmp(b)
+            }
             _ => ordering,
         }
     });
-
-    dbg!(&hands);
 
     hands
         .iter()
