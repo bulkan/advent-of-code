@@ -1,4 +1,4 @@
-use day_07::hand::Hand;
+use day_07::hand2::Hand;
 
 use nom::character::streaming::line_ending;
 use nom::combinator::map;
@@ -93,7 +93,7 @@ mod tests {
             QQQJA 483
         "};
 
-        assert_eq!(camel_cards(input), 6440);
+        assert_eq!(camel_cards(input), 5905);
     }
 
     #[test]

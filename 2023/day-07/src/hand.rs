@@ -58,8 +58,12 @@ impl Hand {
             acc
         });
 
+        // part2  - J is now Joker
         let card_strength_map: HashMap<&str, u32> =
-            HashMap::from([("A", 14), ("K", 13), ("Q", 12), ("J", 11), ("T", 10)]);
+            HashMap::from([("A", 14), ("K", 13), ("Q", 12), ("J", 1), ("T", 10)]);
+
+        // let card_strength_map: HashMap<&str, u32> =
+        //     HashMap::from([("A", 14), ("K", 13), ("Q", 12), ("J", 11), ("T", 10)]);
 
         let cards_strength = cards
             .iter()
