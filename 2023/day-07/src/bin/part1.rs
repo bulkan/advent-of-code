@@ -21,7 +21,7 @@ fn main() {
 fn camel_cards(input: &str) -> u32 {
     let (_, mut hands) = parse_cards(input).expect("parsing failed");
 
-    hands.sort_by_key(|hand| hand.strength());
+    hands.sort_by(|a, b| b.rank.cmp(&a.rank));
 
     dbg!(hands);
 
@@ -100,7 +100,7 @@ mod tests {
         );
     }
 
-    // #[test]
+    #[test]
     fn it_should_work_with_example() {
         let input = indoc! {"
             32T3K 765
@@ -108,6 +108,7 @@ mod tests {
             KK677 28
             KTJJT 220
             QQQJA 483
+            AAAAA 765
         "};
 
         assert_eq!(camel_cards(input), 6440);

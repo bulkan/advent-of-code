@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum PokerHand {
+pub enum PokerHand {
     FiveOfAKind = 7,
     FourOfAKind = 6,
     FullHouse = 5,
@@ -16,7 +16,7 @@ enum PokerHand {
 pub struct Hand<'a> {
     cards: Vec<&'a str>,
     bet: u32,
-    rank: PokerHand,
+    pub rank: PokerHand,
 }
 
 impl<'a> Hand<'a> {
