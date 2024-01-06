@@ -13,14 +13,14 @@ pub enum PokerHand {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Hand<'a> {
-    cards: Vec<&'a str>,
+pub struct Hand {
+    // cards: Vec<&'a str>,
     pub cards_strength: Vec<u32>,
     pub bet: u32,
     pub rank: PokerHand,
 }
 
-impl<'a> Hand<'a> {
+impl Hand {
     fn get_rank(frequency: BTreeMap<&str, u32>) -> PokerHand {
         match frequency.len() {
             1 => PokerHand::FiveOfAKind,
@@ -51,7 +51,7 @@ impl<'a> Hand<'a> {
         }
     }
 
-    pub fn new(cards: Vec<&'a str>, bet: u32) -> Hand {
+    pub fn new(cards: Vec<&str>, bet: u32) -> Hand {
         let frequency: BTreeMap<&str, u32> = cards.iter().fold(BTreeMap::new(), |mut acc, card| {
             acc.entry(card).and_modify(|card| *card += 1).or_insert(1);
 
@@ -71,7 +71,7 @@ impl<'a> Hand<'a> {
             .collect::<Vec<u32>>();
 
         Hand {
-            cards,
+            // cards,
             cards_strength,
             bet,
             rank: Hand::get_rank(frequency),
