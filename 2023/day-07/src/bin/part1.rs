@@ -21,11 +21,23 @@ fn main() {
 fn camel_cards(input: &str) -> u32 {
     let (_, mut hands) = parse_cards(input).expect("parsing failed");
 
-    hands.sort_by(|a, b| b.rank.cmp(&a.rank));
+    hands.sort_by(|a: &Hand, b: &Hand| {
+        let ordering = a.rank.cmp(&b.rank);
 
-    dbg!(hands);
+        match ordering {
+            std::cmp::Ordering::Equal => a.strength().cmp(&b.strength()),
 
-    0
+            _ => ordering,
+        }
+    });
+
+    dbg!(&hands);
+
+    hands
+        .iter()
+        .enumerate()
+        .map(|(index, hand)| hand.bet * (1 + u32::try_from(index).expect("couldn't u32 the index")))
+        .sum::<u32>()
 }
 
 fn parse_cards(input: &str) -> IResult<&str, Vec<Hand>, ErrorTree<&str>> {
@@ -63,6 +75,19 @@ mod tests {
     use crate::{camel_cards, parse_cards, parse_hand, parse_line, Hand};
 
     #[test]
+    fn it_should_work_with_example() {
+        let input = indoc! {"
+            32T3K 765
+            T55J5 684
+            KK677 28
+            KTJJT 220
+            QQQJA 483
+        "};
+
+        assert_eq!(camel_cards(input), 6440);
+    }
+
+    #[test]
     fn parse_hand_works() {
         let hand = "T55J5";
 
@@ -98,19 +123,5 @@ mod tests {
                 Hand::new(vec!["T", "5", "5", "J", "5"], 684)
             ]
         );
-    }
-
-    #[test]
-    fn it_should_work_with_example() {
-        let input = indoc! {"
-            32T3K 765
-            T55J5 684
-            KK677 28
-            KTJJT 220
-            QQQJA 483
-            AAAAA 765
-        "};
-
-        assert_eq!(camel_cards(input), 6440);
     }
 }

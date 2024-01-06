@@ -15,7 +15,7 @@ pub enum PokerHand {
 #[derive(Debug, PartialEq)]
 pub struct Hand<'a> {
     cards: Vec<&'a str>,
-    bet: u32,
+    pub bet: u32,
     pub rank: PokerHand,
 }
 
