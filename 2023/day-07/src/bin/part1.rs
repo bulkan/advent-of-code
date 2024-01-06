@@ -25,8 +25,7 @@ fn camel_cards(input: &str) -> u32 {
         let ordering = a.rank.cmp(&b.rank);
 
         match ordering {
-            std::cmp::Ordering::Equal => a.strength().cmp(&b.strength()),
-
+            std::cmp::Ordering::Equal => a.cards_strength.cmp(&b.cards_strength),
             _ => ordering,
         }
     });

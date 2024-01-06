@@ -15,6 +15,7 @@ pub enum PokerHand {
 #[derive(Debug, PartialEq)]
 pub struct Hand<'a> {
     cards: Vec<&'a str>,
+    pub cards_strength: Vec<u32>,
     pub bet: u32,
     pub rank: PokerHand,
 }
@@ -57,25 +58,24 @@ impl<'a> Hand<'a> {
             acc
         });
 
-        Hand {
-            cards,
-            bet,
-            rank: Hand::get_rank(frequency),
-        }
-    }
-
-    pub fn strength(&self) -> u32 {
-        let card_strength: HashMap<&str, u32> =
+        let card_strength_map: HashMap<&str, u32> =
             HashMap::from([("A", 14), ("K", 13), ("Q", 12), ("J", 11), ("T", 10)]);
 
-        self.cards
+        let cards_strength = cards
             .iter()
             .map(|c| {
-                card_strength
+                card_strength_map
                     .get(c)
                     .map_or_else(|| c.parse::<u32>().expect("the card is digit"), |&val| val)
             })
-            .sum::<u32>()
+            .collect::<Vec<u32>>();
+
+        Hand {
+            cards,
+            cards_strength,
+            bet,
+            rank: Hand::get_rank(frequency),
+        }
     }
 }
 
@@ -100,16 +100,5 @@ mod tests {
         assert_eq!(full_house.rank, PokerHand::FullHouse);
         assert_eq!(five_of_a_kind.rank, PokerHand::FiveOfAKind);
         assert_eq!(four_of_a_kind.rank, PokerHand::FourOfAKind);
-    }
-
-    #[test]
-    fn hand_strength_works() {
-        let hands = [
-            Hand::new(vec!["3", "2", "T", "3", "K"], 765),
-            Hand::new(vec!["T", "5", "5", "J", "5"], 684),
-        ];
-
-        assert_eq!(hands[0].strength(), 31);
-        assert_eq!(hands[1].strength(), 36);
     }
 }
