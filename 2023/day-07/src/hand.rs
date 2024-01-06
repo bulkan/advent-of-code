@@ -2,14 +2,14 @@ use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, PartialEq)]
 enum PokerHand {
-    HighCard,
-    OnePair,
-    TwoPair,
-    FullHouse,
-    ThreeOfAKind,
-    FourOfAKind,
-    FiveOfAKind,
-    Unknown,
+    HighCard(u32),
+    OnePair(u32),
+    TwoPair(u32),
+    FullHouse(u32),
+    ThreeOfAKind(u32),
+    FourOfAKind(u32),
+    FiveOfAKind(u32),
+    Unknown(u32),
 }
 
 #[derive(Debug, PartialEq)]
@@ -22,34 +22,32 @@ pub struct Hand<'a> {
 impl<'a> Hand<'a> {
     fn get_rank(frequency: BTreeMap<&str, u32>) -> PokerHand {
         match frequency.len() {
-            1 => PokerHand::FiveOfAKind,
+            1 => PokerHand::FiveOfAKind(7),
             2 => {
                 let mut values = frequency.values();
-                if values.all(|v| *v == 3 || *v == 2) {
-                    PokerHand::FullHouse
-                } else if values.all(|v| *v == 4 || *v == 1) {
-                    PokerHand::FourOfAKind
+                if values.all(|v| *v == 4 || *v == 1) {
+                    PokerHand::FourOfAKind(6)
+                } else if values.all(|v| *v == 3 || *v == 2) {
+                    PokerHand::FullHouse(5)
                 } else {
-                    PokerHand::Unknown
+                    PokerHand::Unknown(0)
                 }
             }
             3 => {
                 let mut values = frequency.values();
 
                 if values.any(|v| *v == 3) {
-                    PokerHand::ThreeOfAKind
+                    PokerHand::ThreeOfAKind(4)
                 } else if values.all(|v| *v == 2 || *v == 1) {
-                    PokerHand::TwoPair
+                    PokerHand::TwoPair(3)
                 } else {
-                    PokerHand::Unknown
+                    PokerHand::Unknown(0)
                 }
             }
-            4 => PokerHand::OnePair,
-            5 => PokerHand::HighCard,
-            _ => PokerHand::Unknown,
+            4 => PokerHand::OnePair(2),
+            5 => PokerHand::HighCard(1),
+            _ => PokerHand::Unknown(0),
         }
-
-        // frequency.len() == self.frequency.values().all(|v| *v == 3 || *v == 2)
     }
 
     pub fn new(cards: Vec<&'a str>, bet: u32) -> Hand {
@@ -93,15 +91,17 @@ mod tests {
         let pair = Hand::new(vec!["3", "2", "T", "3", "K"], 1);
         let two_pair = Hand::new(vec!["3", "2", "K", "3", "K"], 1);
         let three_of_a_kind = Hand::new(vec!["T", "5", "5", "J", "5"], 1);
+        let full_house = Hand::new(vec!["T", "5", "5", "T", "5"], 1);
         let five_of_a_kind = Hand::new(vec!["5", "5", "5", "5", "5"], 1);
         let four_of_a_kind = Hand::new(vec!["5", "5", "5", "J", "5"], 1);
 
-        assert_eq!(high_card.rank, PokerHand::HighCard);
-        assert_eq!(five_of_a_kind.rank, PokerHand::FiveOfAKind);
-        assert_eq!(four_of_a_kind.rank, PokerHand::FourOfAKind);
-        assert_eq!(pair.rank, PokerHand::OnePair);
-        assert_eq!(two_pair.rank, PokerHand::TwoPair);
-        assert_eq!(three_of_a_kind.rank, PokerHand::ThreeOfAKind);
+        assert_eq!(high_card.rank, PokerHand::HighCard(1));
+        assert_eq!(pair.rank, PokerHand::OnePair(2));
+        assert_eq!(two_pair.rank, PokerHand::TwoPair(3));
+        assert_eq!(three_of_a_kind.rank, PokerHand::ThreeOfAKind(4));
+        assert_eq!(full_house.rank, PokerHand::FullHouse(5));
+        assert_eq!(five_of_a_kind.rank, PokerHand::FiveOfAKind(7));
+        assert_eq!(four_of_a_kind.rank, PokerHand::FourOfAKind(6));
     }
 
     #[test]
