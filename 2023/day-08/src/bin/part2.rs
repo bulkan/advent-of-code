@@ -27,8 +27,6 @@ fn process(input: &str) -> u32 {
 
     let (_, wasteland_map) = parse_nodes(input).expect("parsing of nodes failed");
 
-    dbg!(wasteland_map.nodes.keys().len(), wasteland_map.first_node);
-
     let mut step = 0;
     let mut current_node = "AAA";
 
@@ -72,16 +70,28 @@ fn parse_instructions(input: &str) -> IResult<&str, Vec<char>, ErrorTree<&str>> 
 struct WastelandMap<'a> {
     // instructions: Vec<&char>,
     nodes: HashMap<&'a str, (&'a str, &'a str)>,
-    first_node: &'a str,
+    starting_nodes: Vec<&'a str>,
 }
 
 impl<'a> WastelandMap<'a> {
     fn new(nodes: Vec<(&'a str, (&'a str, &'a str))>) -> WastelandMap {
-        let first_node = nodes[0].0;
+        let starting_nodes = nodes
+            .iter()
+            .filter_map(|(node, (_, _))| {
+                if node.ends_with("A") {
+                    Some(*node)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         let nodes: HashMap<&'a str, (&'a str, &'a str)> = nodes.into_iter().collect();
 
-        WastelandMap { nodes, first_node }
+        WastelandMap {
+            nodes,
+            starting_nodes,
+        }
     }
 }
 
@@ -128,7 +138,7 @@ mod tests {
             BBB = (AAA, ZZZ)"};
 
         let expected = WastelandMap {
-            first_node: "AAA",
+            starting_nodes: vec!["AAA"],
             nodes: HashMap::from([("AAA", ("BBB", "BBB")), ("BBB", ("AAA", "ZZZ"))]),
         };
 
