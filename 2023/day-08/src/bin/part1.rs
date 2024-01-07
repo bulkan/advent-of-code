@@ -18,13 +18,43 @@ fn main() {
 }
 
 fn process(input: &str) -> u32 {
-    0
+    let (input, instructions) =
+        parse_instructions(input).expect("parsing of instruction line failed");
+
+    let (_, wasteland_map) = parse_nodes(input).expect("parsing of nodes failed");
+
+    let mut current_node = wasteland_map.first_node;
+
+    let mut instuctions_iter = instructions.iter().cycle();
+
+    let mut step = 0;
+
+    loop {
+        let direction = instuctions_iter.next();
+
+        if current_node == "ZZZ" {
+            break;
+        }
+
+        match direction {
+            Some('L') => current_node = wasteland_map.nodes[current_node].0,
+            Some('R') => current_node = wasteland_map.nodes[current_node].1,
+            _ => panic!("this shouldnt happen"),
+        }
+
+        step += 1;
+    }
+
+    step
 }
 
 fn parse_instructions(input: &str) -> IResult<&str, Vec<char>, ErrorTree<&str>> {
     let (input, directions) = take_while(|c| !is_newline(c as u8))(input)?;
 
     let directions = directions.chars().collect::<Vec<_>>();
+
+    // skip the blank line
+    let (input, _) = take_while(|c| is_newline(c as u8))(input)?;
 
     Ok((input, directions))
 }
@@ -106,7 +136,7 @@ mod tests {
 
         assert_eq!(
             parse_instructions(input).unwrap(),
-            ("\n\nAAA = (BBB, BBB)\n", vec!['L', 'L', 'R']),
+            ("AAA = (BBB, BBB)\n", vec!['L', 'L', 'R']),
         );
     }
 
