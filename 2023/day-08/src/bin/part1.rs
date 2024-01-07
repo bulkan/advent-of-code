@@ -14,7 +14,11 @@ use nom_supreme::error::ErrorTree;
 use nom_supreme::tag::complete::tag;
 
 fn main() {
-    todo!()
+    let input = include_str!("./input.txt");
+
+    let result = process(input);
+
+    println!("{result}");
 }
 
 fn process(input: &str) -> u32 {
@@ -23,14 +27,17 @@ fn process(input: &str) -> u32 {
 
     let (_, wasteland_map) = parse_nodes(input).expect("parsing of nodes failed");
 
+    dbg!(wasteland_map.nodes.keys().len(), wasteland_map.first_node);
+
+    let mut step = 0;
     let mut current_node = wasteland_map.first_node;
 
     let mut instuctions_iter = instructions.iter().cycle();
 
-    let mut step = 0;
-
     loop {
         let direction = instuctions_iter.next();
+
+        print!("{current_node} {direction:?} {step}");
 
         if current_node == "ZZZ" {
             break;
@@ -141,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn it_works_as_expected() {
+    fn it_works_with_sample_data_2() {
         let input = indoc! {"
             LLR
 
@@ -153,5 +160,23 @@ mod tests {
         let res = process(input);
 
         assert_eq!(res, 6);
+    }
+
+    #[test]
+    fn it_works_with_sample_data_1() {
+        let input = indoc! {"
+        RL
+
+        AAA = (BBB, CCC)
+        BBB = (DDD, EEE)
+        CCC = (ZZZ, GGG)
+        DDD = (DDD, DDD)
+        EEE = (EEE, EEE)
+        GGG = (GGG, GGG)
+        ZZZ = (ZZZ, ZZZ)"};
+
+        let res = process(input);
+
+        assert_eq!(res, 2);
     }
 }
