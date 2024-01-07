@@ -1,12 +1,18 @@
-use std::{char, os::unix::fs::DirEntryExt};
+use std::{char, collections::HashMap};
 
-use indoc::indoc;
 use nom::{
+    branch::alt,
     bytes::complete::take_while,
-    character::{complete::newline, is_newline},
+    character::{
+        complete::{alpha1, line_ending},
+        is_newline,
+    },
+    multi::separated_list1,
+    sequence::separated_pair,
     IResult,
 };
 use nom_supreme::error::ErrorTree;
+use nom_supreme::tag::complete::tag;
 
 fn main() {
     todo!()
@@ -24,13 +30,66 @@ fn parse_instructions(input: &str) -> IResult<&str, Vec<char>, ErrorTree<&str>> 
     Ok((input, directions))
 }
 
+#[derive(Debug, PartialEq)]
+struct WastelandMap<'a> {
+    // instructions: Vec<&char>,
+    nodes: HashMap<&'a str, (&'a str, &'a str)>,
+    first_node: &'a str,
+}
+
+impl<'a> WastelandMap<'a> {
+    fn new() -> WastelandMap {}
+}
+
+// (BBB,  BBB)
+fn parse_node_values(input: &str) -> IResult<&str, (&str, &str), ErrorTree<&str>> {
+    let (input, _) = tag("(")(input)?;
+
+    let (input, values) = separated_pair(alpha1, tag(", "), alpha1)(input)?;
+
+    let (input, _) = tag(")")(input)?;
+
+    Ok((input, values))
+}
+
+// AAA = (BBB, BBB)
+fn parse_nodes(input: &str) -> IResult<&str, WastelandMap, ErrorTree<&str>> {
+    let (input, raw_string_vec) = separated_list1(
+        line_ending,
+        separated_pair(alpha1, tag(" = "), parse_node_values),
+    )(input)?;
+
+    dbg!(raw_string_vec);
+
+    Ok((input, vec![]))
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{parse_instructions, process};
+    use crate::{parse_instructions, parse_node_values, parse_nodes, process};
     use indoc::indoc;
 
     #[test]
-    fn parse_instructions_works() {
+    fn parse_node_values_returns_correct_values() {
+        assert_eq!(
+            parse_node_values("(BBB, BBB)").unwrap(),
+            ("", ("BBB", "BBB"))
+        );
+    }
+
+    #[test]
+    fn parse_nodes_returns_correct_values() {
+        let input = indoc! {"
+            AAA = (BBB, BBB)
+            BBB = (AAA, ZZZ)
+
+        "};
+
+        assert_eq!(parse_nodes(input).unwrap(), ("", vec![]))
+    }
+
+    #[test]
+    fn parse_instructions_returns_correct_values() {
         let input = indoc! {"
             LLR
 
