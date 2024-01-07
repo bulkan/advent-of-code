@@ -1,7 +1,6 @@
 use std::{char, collections::HashMap};
 
 use nom::{
-    branch::alt,
     bytes::complete::take_while,
     character::{
         complete::{alpha1, line_ending},
@@ -38,7 +37,13 @@ struct WastelandMap<'a> {
 }
 
 impl<'a> WastelandMap<'a> {
-    fn new() -> WastelandMap {}
+    fn new(nodes: Vec<(&'a str, (&'a str, &'a str))>) -> WastelandMap {
+        let first_node = nodes[0].0;
+
+        let nodes: HashMap<&'a str, (&'a str, &'a str)> = nodes.into_iter().collect();
+
+        WastelandMap { nodes, first_node }
+    }
 }
 
 // (BBB,  BBB)
@@ -54,19 +59,19 @@ fn parse_node_values(input: &str) -> IResult<&str, (&str, &str), ErrorTree<&str>
 
 // AAA = (BBB, BBB)
 fn parse_nodes(input: &str) -> IResult<&str, WastelandMap, ErrorTree<&str>> {
-    let (input, raw_string_vec) = separated_list1(
+    let (input, nodes_vec) = separated_list1(
         line_ending,
         separated_pair(alpha1, tag(" = "), parse_node_values),
     )(input)?;
 
-    dbg!(raw_string_vec);
-
-    Ok((input, vec![]))
+    Ok((input, WastelandMap::new(nodes_vec)))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse_instructions, parse_node_values, parse_nodes, process};
+    use std::collections::HashMap;
+
+    use crate::{parse_instructions, parse_node_values, parse_nodes, process, WastelandMap};
     use indoc::indoc;
 
     #[test]
@@ -81,11 +86,14 @@ mod tests {
     fn parse_nodes_returns_correct_values() {
         let input = indoc! {"
             AAA = (BBB, BBB)
-            BBB = (AAA, ZZZ)
+            BBB = (AAA, ZZZ)"};
 
-        "};
+        let expected = WastelandMap {
+            first_node: "AAA",
+            nodes: HashMap::from([("AAA", ("BBB", "BBB")), ("BBB", ("AAA", "ZZZ"))]),
+        };
 
-        assert_eq!(parse_nodes(input).unwrap(), ("", vec![]))
+        assert_eq!(parse_nodes(input).unwrap(), ("", expected))
     }
 
     #[test]
