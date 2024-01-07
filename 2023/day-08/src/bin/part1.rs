@@ -30,14 +30,16 @@ fn process(input: &str) -> u32 {
     dbg!(wasteland_map.nodes.keys().len(), wasteland_map.first_node);
 
     let mut step = 0;
-    let mut current_node = wasteland_map.first_node;
+    let mut current_node = "AAA";
 
     let mut instuctions_iter = instructions.iter().cycle();
 
     loop {
         let direction = instuctions_iter.next();
 
-        print!("{current_node} {direction:?} {step}");
+        if step % 1000000 == 0 {
+            println!("{current_node} {direction:?} {step}");
+        }
 
         if current_node == "ZZZ" {
             break;
