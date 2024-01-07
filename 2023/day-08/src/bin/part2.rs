@@ -1,4 +1,4 @@
-use std::{char, collections::HashMap};
+use std::collections::HashMap;
 
 use nom::{
     bytes::complete::take_while,
@@ -28,24 +28,35 @@ fn process(input: &str) -> u32 {
     let (_, wasteland_map) = parse_nodes(input).expect("parsing of nodes failed");
 
     let mut step = 0;
-    let mut current_node = "AAA";
-
+    let mut current_nodes = wasteland_map.starting_nodes;
     let mut instuctions_iter = instructions.iter().cycle();
+
+    dbg!(&current_nodes);
 
     loop {
         let direction = instuctions_iter.next();
 
-        if step % 1000000 == 0 {
-            println!("{current_node} {direction:?} {step}");
+        if step % 10000000 == 0 {
+            println!("{current_nodes:?} {step}");
         }
 
-        if current_node == "ZZZ" {
+        if current_nodes.iter().all(|v| v.ends_with('Z')) {
             break;
         }
 
         match direction {
-            Some('L') => current_node = wasteland_map.nodes[current_node].0,
-            Some('R') => current_node = wasteland_map.nodes[current_node].1,
+            Some('L') => {
+                current_nodes = current_nodes
+                    .iter()
+                    .map(|node| wasteland_map.nodes[node].0)
+                    .collect()
+            }
+            Some('R') => {
+                current_nodes = current_nodes
+                    .iter()
+                    .map(|node| wasteland_map.nodes[node].1)
+                    .collect()
+            }
             _ => panic!("this shouldnt happen"),
         }
 
@@ -77,7 +88,7 @@ impl<'a> WastelandMap<'a> {
         let starting_nodes = nodes
             .iter()
             .filter_map(|(node, (_, _))| {
-                if node.ends_with("A") {
+                if node.ends_with('A') {
                     Some(*node)
                 } else {
                     None
