@@ -3,7 +3,7 @@ use std::{char, collections::HashMap};
 use nom::{
     bytes::complete::take_while,
     character::{
-        complete::{alpha1, line_ending},
+        complete::{alphanumeric1, line_ending},
         is_newline,
     },
     multi::separated_list1,
@@ -68,7 +68,6 @@ fn parse_instructions(input: &str) -> IResult<&str, Vec<char>, ErrorTree<&str>> 
 
 #[derive(Debug, PartialEq)]
 struct WastelandMap<'a> {
-    // instructions: Vec<&char>,
     nodes: HashMap<&'a str, (&'a str, &'a str)>,
     starting_nodes: Vec<&'a str>,
 }
@@ -99,7 +98,7 @@ impl<'a> WastelandMap<'a> {
 fn parse_node_values(input: &str) -> IResult<&str, (&str, &str), ErrorTree<&str>> {
     let (input, _) = tag("(")(input)?;
 
-    let (input, values) = separated_pair(alpha1, tag(", "), alpha1)(input)?;
+    let (input, values) = separated_pair(alphanumeric1, tag(", "), alphanumeric1)(input)?;
 
     let (input, _) = tag(")")(input)?;
 
@@ -110,7 +109,7 @@ fn parse_node_values(input: &str) -> IResult<&str, (&str, &str), ErrorTree<&str>
 fn parse_nodes(input: &str) -> IResult<&str, WastelandMap, ErrorTree<&str>> {
     let (input, nodes_vec) = separated_list1(
         line_ending,
-        separated_pair(alpha1, tag(" = "), parse_node_values),
+        separated_pair(alphanumeric1, tag(" = "), parse_node_values),
     )(input)?;
 
     Ok((input, WastelandMap::new(nodes_vec)))
@@ -134,12 +133,19 @@ mod tests {
     #[test]
     fn parse_nodes_returns_correct_values() {
         let input = indoc! {"
-            AAA = (BBB, BBB)
-            BBB = (AAA, ZZZ)"};
+            11A = (11B, XXX)
+            11Z = (11B, XXX)
+            22A = (22B, XXX)
+            XXX = (XXX, XXX)"};
 
         let expected = WastelandMap {
-            starting_nodes: vec!["AAA"],
-            nodes: HashMap::from([("AAA", ("BBB", "BBB")), ("BBB", ("AAA", "ZZZ"))]),
+            starting_nodes: vec!["11A", "22A"],
+            nodes: HashMap::from([
+                ("11A", ("11B", "XXX")),
+                ("11Z", ("11B", "XXX")),
+                ("22A", ("22B", "XXX")),
+                ("XXX", ("XXX", "XXX")),
+            ]),
         };
 
         assert_eq!(parse_nodes(input).unwrap(), ("", expected))
@@ -177,18 +183,19 @@ mod tests {
     #[test]
     fn it_works_with_sample_data_1() {
         let input = indoc! {"
-        RL
+            LR
 
-        AAA = (BBB, CCC)
-        BBB = (DDD, EEE)
-        CCC = (ZZZ, GGG)
-        DDD = (DDD, DDD)
-        EEE = (EEE, EEE)
-        GGG = (GGG, GGG)
-        ZZZ = (ZZZ, ZZZ)"};
+            11A = (11B, XXX)
+            11B = (XXX, 11Z)
+            11Z = (11B, XXX)
+            22A = (22B, XXX)
+            22B = (22C, 22C)
+            22C = (22Z, 22Z)
+            22Z = (22B, 22B)
+            XXX = (XXX, XXX)"};
 
         let res = process(input);
 
-        assert_eq!(res, 2);
+        assert_eq!(res, 6);
     }
 }
