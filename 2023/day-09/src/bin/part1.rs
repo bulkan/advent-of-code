@@ -1,3 +1,5 @@
+use itertools::{Itertools, Position};
+
 fn main() {
     let input = include_str!("./input.txt");
 
@@ -6,34 +8,49 @@ fn main() {
     println!("{result}");
 }
 
-fn process(input: &str) -> u32 {
-    todo!()
-}
+fn process(input: &str) -> i64 {
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line
+                .split_whitespace()
+                .map(|n| n.parse::<i64>().unwrap())
+                .collect::<Vec<i64>>();
 
-fn generate_difference(input: Vec<i32>) -> Vec<Vec<i32>> {
-    vec![]
+            let mut end_numbers: Vec<i64> = vec![];
+
+            loop {
+                if nums.iter().all(|n| n == &0) {
+                    break;
+                }
+
+                nums = nums
+                    .iter()
+                    .tuple_windows::<(&i64, &i64)>()
+                    .with_position()
+                    .map(|(position, (left, right))| {
+                        match position {
+                            Position::Last | Position::Only => {
+                                end_numbers.push(*right);
+                            }
+                            _ => {}
+                        };
+
+                        right - left
+                    })
+                    .collect::<Vec<i64>>();
+            }
+
+            end_numbers.iter().fold(0, |acc, num| acc + num)
+        })
+        .sum()
 }
 
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
 
-    use crate::{generate_difference, process};
-
-    #[test]
-    fn generate_difference_calcuation_works() {
-        let input = vec![10, 13, 16, 21, 30, 45];
-
-        let expected = vec![
-            vec![10, 13, 16, 21, 30, 45],
-            vec![3, 3, 5, 9, 15, 23],
-            vec![0, 2, 4, 6, 8],
-            vec![2, 2, 2, 2],
-            vec![0, 0, 0],
-        ];
-
-        assert_eq!(generate_difference(input), expected);
-    }
+    use crate::process;
 
     #[test]
     fn example_should_work() {
