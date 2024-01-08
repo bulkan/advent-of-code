@@ -41,7 +41,7 @@ fn process(input: &str) -> i64 {
                     .collect::<Vec<i64>>();
             }
 
-            end_numbers.iter().fold(0, |acc, num| acc + num)
+            end_numbers.iter().sum::<i64>()
         })
         .sum()
 }
