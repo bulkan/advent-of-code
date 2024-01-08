@@ -17,7 +17,7 @@ fn process(input: &str) -> i64 {
                 .map(|n| n.parse::<i64>().unwrap())
                 .collect::<Vec<i64>>();
 
-            let mut end_numbers: Vec<i64> = vec![];
+            let mut start_numbers: Vec<i64> = vec![];
 
             loop {
                 if nums.iter().all(|n| n == &0) {
@@ -30,9 +30,7 @@ fn process(input: &str) -> i64 {
                     .with_position()
                     .map(|(position, (left, right))| {
                         match position {
-                            Position::Last | Position::Only => {
-                                end_numbers.push(*right);
-                            }
+                            Position::First | Position::Only => start_numbers.push(*left),
                             _ => {}
                         };
 
@@ -41,7 +39,7 @@ fn process(input: &str) -> i64 {
                     .collect::<Vec<i64>>();
             }
 
-            end_numbers.iter().sum::<i64>()
+            start_numbers.iter().rev().fold(0, |acc, num| num - acc)
         })
         .sum()
 }
@@ -55,10 +53,10 @@ mod tests {
     #[test]
     fn example_should_work() {
         let input = indoc! {"
-            3 6 9 12 15
+            0 3 6 9 12 15
             1 3 6 10 15 21
             10 13 16 21 30 45"};
 
-        assert_eq!(process(input), 114);
+        assert_eq!(process(input), 2);
     }
 }
