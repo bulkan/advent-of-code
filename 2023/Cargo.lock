@@ -102,6 +102,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "day-11"
+version = "0.1.0"
+dependencies = [
+ "indoc",
+ "itertools",
+ "nom",
+ "nom-supreme",
+]
+
+[[package]]
 name = "day-2"
 version = "0.1.0"
 
