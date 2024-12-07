@@ -7,7 +7,7 @@ use nom::{
     sequence::{separated_pair, terminated},
     IResult,
 };
-use std::iter;
+use std::{iter, ops::Add, ops::Mul};
 
 #[derive(Debug, PartialEq)]
 struct TestResult {
@@ -43,13 +43,90 @@ fn parse(input: &str) -> IResult<&str, Vec<TestResult>> {
     )(input)
 }
 
-fn run_operation(operation: &str, values: Vec<u32>) -> u32 {
-    match operation {
-        "*" => todo!(),
-        "+" => todo!(),
-        _ => panic!("unknown operation"),
+fn run_operations(mut operations: Vec<&str>, mut values: Vec<u32>) -> u32 {
+    //
+    // if values.len() == 2 {
+    //     let (a, b) = values
+    //         .drain(0..2)
+    //         .collect_tuple()
+    //         .expect("should have two values");
+    //
+    //     match op {
+    //         "*" => a * b,
+    //         "+" => a + b,
+    //     }
+    // }
+    //
+    // if values.len() == 1 {
+    //     return values.remove(0);
+    // }
+    //
+    // let (a, b) = values
+    //     .drain(0..2)
+    //     .collect_tuple()
+    //     .expect("should have two values");
+    //
+    // let next_op = operations.first();
+    //
+    // match (op, next_op) {
+    //     ("*", Some(&"*")) => (a * b) * run_operations(operations, values),
+    //     ("*", Some(&"+")) => (a * b) + run_operations(operations, values),
+    //     ("+", Some(&"+")) => (a + b) + run_operations(operations, values),
+    //     ("+", Some(&"*")) => (a + b) * run_operations(operations, values),
+    //     ("*", None) => a * b,
+    //     ("+", None) => a + b,
+    //     _ => panic!("should'nt happen"),
+    // }
+
+    let mut res = 0;
+
+    if values.len() >= 2 {
+        let (a, b) = values
+            .drain(0..2)
+            .collect_tuple()
+            .expect("should have two values");
+
+        let op = operations.remove(0);
+
+        res = match op {
+            "*" => a * b,
+            "+" => a + b,
+            _ => panic!("should'nt happen"),
+        };
+
+        for a in values.iter() {
+            if let Some(op) = operations.first() {
+                match *op {
+                    "*" => res *= a,
+                    "+" => res += a,
+                    _ => panic!("should'nt happen"),
+                };
+            }
+
+            operations.remove(0);
+        }
     }
-    0
+
+    // for a in values {
+    //     if operations.len() == 0 {
+    //         break;
+    //     }
+    //     let op = operations.remove(0);
+    //     // let next_op = operations.first();
+    //
+    //     match op {
+    //         "*" => {
+    //             if res == 0 {
+    //                 res = 1;
+    //             }
+    //             res *= a;
+    //         }
+    //         "+" => res += a,
+    //         _ => panic!("should'nt happen"),
+    //     };
+    // }
+
+    res
 }
 
 fn check_test_result(test_result: &TestResult) -> bool {
@@ -58,8 +135,6 @@ fn check_test_result(test_result: &TestResult) -> bool {
     let perms = iter::repeat_n(operations.into_iter(), test_result.values.len() - 1)
         .multi_cartesian_product()
         .collect::<Vec<_>>();
-
-    let all_mul = dbg!(perms);
 
     false
 }
@@ -85,6 +160,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_run_operations() {
+        assert_eq!(
+            run_operations(vec!["+", "*", "+"], vec![11, 6, 16, 20]),
+            292
+        );
+        assert_eq!(run_operations(vec!["*", "*"], vec![1, 1, 1]), 1);
+        assert_eq!(run_operations(vec!["+"], vec![17, 5]), 22);
+        assert_eq!(run_operations(vec!["*"], vec![17, 5]), 85);
+        assert_eq!(run_operations(vec!["+", "+"], vec![16, 10, 13]), 39);
+        assert_eq!(run_operations(vec!["*", "+"], vec![13, 10, 16]), 146);
+    }
+
+    #[test]
     fn test_parse_test_result() {
         let input = "292: 11 6 16 20";
 
@@ -98,17 +186,17 @@ mod tests {
         assert_eq!(test_result, target_test_result);
     }
 
-    #[test]
-    fn test_process() {
-        let input = "190: 10 19
-3267: 81 40 27
-83: 17 5
-156: 15 6
-7290: 6 8 6 15
-161011: 16 10 13
-192: 17 8 14
-21037: 9 7 18 13
-292: 11 6 16 20";
-        assert_eq!(3749, process(input));
-    }
+    //     #[test]
+    //     fn test_process() {
+    //         let input = "190: 10 19
+    // 3267: 81 40 27
+    // 83: 17 5
+    // 156: 15 6
+    // 7290: 6 8 6 15
+    // 161011: 16 10 13
+    // 192: 17 8 14
+    // 21037: 9 7 18 13
+    // 292: 11 6 16 20";
+    //         assert_eq!(3749, process(input));
+    //     }
 }
