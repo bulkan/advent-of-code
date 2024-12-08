@@ -33,9 +33,7 @@ fn parse(input: &str) -> IResult<&str, Vec<TestResult>> {
 
 fn run_operations(operations: &[&str], mut values: Vec<u64>) -> u64 {
     let mut operations = operations.to_vec();
-    let mut res = 0;
 
-    // i don't think this check is necessary
     let (a, b) = values
         .drain(0..2)
         .collect_tuple()
@@ -43,7 +41,7 @@ fn run_operations(operations: &[&str], mut values: Vec<u64>) -> u64 {
 
     let op = operations.remove(0);
 
-    res = match op {
+    let mut res = match op {
         "*" => a * b,
         "+" => a + b,
         _ => panic!("should'nt happen"),
