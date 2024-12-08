@@ -31,43 +31,25 @@ fn parse(input: &str) -> IResult<&str, Vec<TestResult>> {
     separated_list1(line_ending, parse_test_result)(input)
 }
 
-fn run_operations(operations: &[&str], mut values: Vec<u64>) -> u64 {
-    let mut operations = operations.to_vec();
+fn run_operations(operations: &[&str], values: Vec<u64>) -> u64 {
+    let mut i = operations.iter();
 
-    let (a, b) = values
-        .drain(0..2)
-        .collect_tuple()
-        .expect("should have two values");
+    values
+        .iter()
+        .copied()
+        .reduce(|a, b| {
+            let op = i.next().expect("should exist");
 
-    let op = operations.remove(0);
-
-    let mut res = match op {
-        "||" => format!("{}{}", a, b)
-            .parse::<u64>()
-            .expect("concat should work"),
-        "*" => a * b,
-        "+" => a + b,
-        _ => panic!("shouldnt happen"),
-    };
-
-    for a in values.iter() {
-        if let Some(op) = operations.first() {
             match *op {
-                "||" => {
-                    res = format!("{}{}", res, a)
-                        .parse::<u64>()
-                        .expect("concat should work")
-                }
-                "*" => res *= a,
-                "+" => res += a,
-                _ => panic!("shouldt happen"),
-            };
-        }
-
-        operations.remove(0);
-    }
-
-    res
+                "||" => format!("{}{}", a, b)
+                    .parse::<u64>()
+                    .expect("concat should work"),
+                "*" => a * b,
+                "+" => a + b,
+                _ => panic!("op was borked"),
+            }
+        })
+        .unwrap()
 }
 
 fn check_test_result(test_result: &TestResult) -> bool {
