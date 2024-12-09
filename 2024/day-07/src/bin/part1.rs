@@ -9,6 +9,8 @@ use nom::{
 };
 use std::iter;
 
+use rayon::prelude::*;
+
 #[derive(Debug, PartialEq)]
 struct TestResult {
     target: u64,
@@ -57,7 +59,7 @@ fn check_test_result(test_result: &TestResult) -> bool {
         .collect::<Vec<Vec<&str>>>();
 
     perms
-        .iter()
+        .par_iter()
         .any(|perm| test_result.target == run_operations(perm, test_result.values.clone()))
 }
 
