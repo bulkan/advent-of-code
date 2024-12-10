@@ -1,3 +1,5 @@
+use std::usize;
+
 use itertools::Itertools;
 
 fn process(input: &str) -> u32 {
@@ -37,7 +39,36 @@ fn process(input: &str) -> u32 {
         .flatten()
         .collect_vec();
 
-    dbg!(zeros);
+    let grid_width = grid.first().expect("should exist").len() as i32;
+    let grid_height = grid.len() as i32;
+
+    zeros
+        .iter()
+        .map(|(x, y)| {
+            let mut current = 0;
+
+            let next_direction = directions.iter().find(|(dx, dy)| {
+                let next_x = *x as i32 + dx;
+                let next_y = *y as i32 + dy;
+
+                if next_x < 0 || next_x > grid_width || next_y < 0 || next_y > grid_height {
+                    return false;
+                }
+
+                let next_val = grid
+                    .get(next_y as usize)
+                    .and_then(|row| row.get(next_x as usize))
+                    .copied();
+
+                if Some(current + 1) == next_val {
+                    dbg!(next_val, current);
+                }
+
+                false
+            });
+        })
+        .collect_vec();
+
     0
 }
 
@@ -58,6 +89,6 @@ mod tests {
 8765
 9876
 ";
-        assert_eq!(42, process(input));
+        assert_eq!(36, process(input));
     }
 }
