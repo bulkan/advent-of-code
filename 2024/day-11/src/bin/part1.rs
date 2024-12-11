@@ -9,6 +9,10 @@ fn process(input: &str, run_count: u32) -> usize {
     let mut count = 0;
 
     loop {
+        if count >= run_count {
+            break;
+        }
+
         let new_stones = stones
             .iter()
             .flat_map(|stone| {
@@ -27,10 +31,6 @@ fn process(input: &str, run_count: u32) -> usize {
             })
             .collect::<Vec<_>>();
 
-        if count >= run_count {
-            break;
-        }
-
         count += 1;
 
         stones = new_stones;
@@ -43,7 +43,7 @@ fn process(input: &str, run_count: u32) -> usize {
 
 fn main() {
     let input = include_str!("./input.txt");
-    let res = process(input, 6);
+    let res = process(input, 25);
     dbg!(res);
 }
 
