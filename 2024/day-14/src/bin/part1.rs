@@ -13,8 +13,11 @@ struct Robot {
     velocity: IVec2,
 }
 
-const WIDTH: i32 = 11;
-const HEIGHT: i32 = 7;
+const TILES_SIZE: IVec2 = if cfg!(test) {
+    IVec2::new(11, 7)
+} else {
+    IVec2::new(101, 103)
+};
 
 fn main() {
     let input = include_str!("./input.txt");
@@ -24,48 +27,88 @@ fn main() {
 
 fn process(input: &str) -> usize {
     let robots = simulate_robots_movements(input, 100);
+
     calculate_robots_in_quadrants(&robots)
 }
 
 fn calculate_robots_in_quadrants(robots: &[Robot]) -> usize {
-    let middle = IVec2::from((WIDTH / 2, HEIGHT / 2));
+    let middle = TILES_SIZE / 2;
 
-    robots
+    let filtered_bots = robots
         .iter()
-        .filter(|robot| robot.position != middle)
-        .count()
+        .filter(|robot| {
+            if robot.position.x == middle.x || robot.position.y == middle.y {
+                return false;
+            }
+
+            true
+        })
+        .collect::<Vec<_>>();
+
+    // dbg!(&filtered_bots);
+    // dbg!(&robots.len(), filtered_bots.len());
+
+    let mut q1 = 0;
+
+    // q1
+    for x in 0..middle.x {
+        for y in 0..middle.y {
+            let p = IVec2::from((x, y));
+            q1 += filtered_bots
+                .iter()
+                .filter(|bot| bot.position.x == p.x && bot.position.y == p.y)
+                .count();
+        }
+    }
+
+    let mut q2 = 0;
+    for x in middle.x..TILES_SIZE.x {
+        for y in 0..=middle.y {
+            let p = IVec2::from((x, y));
+            q2 += filtered_bots
+                .iter()
+                .filter(|bot| bot.position.x == p.x && bot.position.y == p.y)
+                .count();
+        }
+    }
+
+    let mut q3 = 0;
+
+    // q3
+    for x in 0..=middle.x {
+        for y in middle.y..TILES_SIZE.y {
+            let p = IVec2::from((x, y));
+            q3 += filtered_bots
+                .iter()
+                .filter(|bot| bot.position.x == p.x && bot.position.y == p.y)
+                .count();
+        }
+    }
+
+    let mut q4 = 0;
+    // q4
+    for x in middle.x..TILES_SIZE.x {
+        for y in middle.y..TILES_SIZE.y {
+            let p = IVec2::from((x, y));
+            q4 += filtered_bots
+                .iter()
+                .filter(|bot| bot.position.x == p.x && bot.position.y == p.y)
+                .count();
+        }
+    }
+
+    dbg!(q1, q2, q3, q4);
+
+    q1 * q2 * q3 * q4
 }
 
 fn simulate_robots_movements(input: &str, seconds: usize) -> Vec<Robot> {
     let (_, mut robots) = parse(input).unwrap();
 
     for _ in 0..seconds {
-        robots = robots
-            .into_iter()
-            .map(|mut robot| {
-                let mut next_pos = robot.position + robot.velocity;
-
-                if next_pos.x < 0 {
-                    next_pos.x += WIDTH;
-                }
-
-                if next_pos.x > WIDTH {
-                    next_pos.x -= WIDTH;
-                }
-
-                if next_pos.y > HEIGHT {
-                    next_pos.y -= HEIGHT;
-                }
-
-                if next_pos.y < 0 {
-                    next_pos.y += HEIGHT;
-                }
-
-                robot.position = next_pos;
-
-                robot
-            })
-            .collect::<Vec<_>>();
+        for robot in robots.iter_mut() {
+            robot.position = (robot.position + robot.velocity).rem_euclid(TILES_SIZE);
+        }
     }
 
     robots
@@ -104,8 +147,23 @@ fn parse_velocity(input: &str) -> IResult<&str, (i32, i32)> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::*;
     use rstest::rstest;
+
+    const INPUT: &str = "p=0,4 v=3,-3
+p=6,3 v=-1,-3
+p=10,3 v=-1,2
+p=2,0 v=2,-1
+p=0,0 v=1,3
+p=3,0 v=-2,-2
+p=7,6 v=-1,-3
+p=3,0 v=-1,-2
+p=9,3 v=2,3
+p=7,3 v=-1,2
+p=2,4 v=2,-3
+p=9,5 v=-3,-3";
 
     #[rstest]
     #[case("p=6,3", (6,3))]
@@ -149,20 +207,43 @@ mod tests {
         assert_eq!(robots.first().unwrap().position, expected_pos);
     }
 
-    //     #[test]
-    //     fn test_process() {
-    //         let input = "p=0,4 v=3,-3
-    // p=6,3 v=-1,-3
-    // p=10,3 v=-1,2
-    // p=2,0 v=2,-1
-    // p=0,0 v=1,3
-    // p=3,0 v=-2,-2
-    // p=7,6 v=-1,-3
-    // p=3,0 v=-1,-2
-    // p=9,3 v=2,3
-    // p=7,3 v=-1,2
-    // p=2,4 v=2,-3
-    // p=9,5 v=-3,-3";
-    //         assert_eq!(0, process(input, 11, 7, 100));
-    //     }
+    //  width = 11, height = 7
+    #[rstest]
+    #[case("p=2,0 v=2,-3", 1, (4,4))]
+    fn test_simulate_edges(
+        #[case] input: &str,
+        #[case] seconds: usize,
+        #[case] expected: (i32, i32),
+    ) {
+        let expected_pos = IVec2::from(expected);
+        let robots = simulate_robots_movements(input, seconds);
+        assert_eq!(robots.first().unwrap().position, expected_pos);
+    }
+
+    #[test]
+    fn test_simulate() {
+        let robots = simulate_robots_movements(INPUT, 100);
+
+        let expected_robots = HashSet::from([
+            IVec2::from((6, 0)),
+            IVec2::from((9, 0)),
+            IVec2::from((0, 2)),
+            IVec2::from((1, 3)),
+            IVec2::from((2, 3)),
+            IVec2::from((5, 4)),
+            IVec2::from((3, 5)),
+            IVec2::from((4, 5)),
+            IVec2::from((1, 6)),
+            IVec2::from((6, 6)),
+        ]);
+
+        assert!(robots
+            .iter()
+            .all(|bot| expected_robots.contains(&bot.position)));
+    }
+
+    #[test]
+    fn test_process() {
+        assert_eq!(12, process(INPUT));
+    }
 }
