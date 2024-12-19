@@ -1,12 +1,22 @@
-use itertools::Itertools;
-
 pub fn process(input: &str) -> i32 {
-    input
-        .lines()
-        .map(|n| n.parse::<i32>().expect("should be a digit"))
-        .tuple_combinations::<(i32, i32, i32)>()
-        .filter(|(a, b, c)| a + b + c == 2020)
-        .fold(0, |acc, (a, b, c)| acc + a * b * c)
+    let mut pos: i32 = 0;
+    let mut sum: i32 = 0;
+
+    for (i, c) in input.chars().enumerate() {
+        pos = i as i32;
+
+        match c {
+            '(' => sum += 1,
+            ')' => sum -= 1,
+            _ => panic!("wat"),
+        }
+
+        if sum == -1 {
+            break;
+        }
+    }
+
+    pos + 1
 }
 
 fn main() {
@@ -18,15 +28,12 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
-    fn test_process() {
-        let input = "1721
-979
-366
-299
-675
-1456";
-        assert_eq!(241861950, process(input));
+    #[rstest]
+    #[case(")", 1)]
+    #[case("()())", 5)]
+    fn test_process(#[case] input: &str, #[case] expected: i32) {
+        assert_eq!(expected, process(input))
     }
 }
